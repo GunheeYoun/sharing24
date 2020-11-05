@@ -1,0 +1,38 @@
+package sharingclothes;
+
+import sharingclothes.config.kafka.KafkaProcessor;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cloud.stream.annotation.StreamListener;
+import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.stereotype.Service;
+
+import java.util.Optional;
+
+@Service
+public class PolicyHandler{
+    @StreamListener(KafkaProcessor.INPUT)
+    public void onStringEventListener(@Payload String eventString){
+
+    }
+
+    @Autowired
+    OrderRepository orderRepository;
+
+    @StreamListener(KafkaProcessor.INPUT)
+    public void wheneverShipped_UpdateStatus(@Payload Shipped shipped){
+
+        if(shipped.isMe()){
+            //  ('주문됨' 알림)
+
+            // Order Aggregate에 등록
+            Optional<Order> orderOptional = orderRepository.findById(shipped.getOrderId());   // Optional<Order> --> null 일 수 있음
+            Order order = orderOptional.get();
+            order.setStatus(shipped.getStatus());
+
+            System.out.println("##### listener UpdateStatus : " + shipped.toJson());
+        }
+    }
+
+}
